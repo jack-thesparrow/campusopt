@@ -17,7 +17,8 @@
             pkgs.python311
             pkgs.python311Packages.pip
             pkgs.python311Packages.virtualenv
-            pkgs.nodejs_20 # only needed for the optional React v2 frontend
+            pkgs.nodejs_22 # only needed for the optional React v2 frontend
+            pkgs.act
           ];
 
           shellHook = ''

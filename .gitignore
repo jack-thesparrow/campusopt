@@ -31,3 +31,8 @@ reports/solution_quality/*
 
 # Env
 .env
+.envrc
+
+# Machine Specific
+.direnv/*
+
