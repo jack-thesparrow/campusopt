@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+ortools
+pulp
+pandas
+scikit-learn
+xgboost
+streamlit
+plotly
+pydantic
+pytest
+ruff
+python-multipart

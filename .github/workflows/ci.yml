@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r backend/requirements.txt
+
+      - name: Lint (ruff)
+        run: ruff check .
+
+      - name: Run tests
+        run: pytest backend/tests -v
+
+      - name: Smoke test — generate small dataset
+        run: python scripts/generate_synthetic_data.py --scale small --seed 42
+
+      - name: Smoke test — run small benchmark
+        run: python scripts/run_benchmark.py --subproblem all --sizes small
