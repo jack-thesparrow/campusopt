@@ -4,6 +4,7 @@ ortools
 pulp
 pandas
 scikit-learn
+joblib
 xgboost
 streamlit
 plotly

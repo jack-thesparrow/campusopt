@@ -1,0 +1,7 @@
+block_id,gender,category_allowed
+HB-1,boys,general
+HB-2,boys,reserved
+HB-3,boys,mixed
+HB-4,girls,general
+HB-5,girls,reserved
+HB-6,girls,mixed
