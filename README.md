@@ -1,44 +1,89 @@
 # CampusOpt
 
-AI-assisted resource optimizer for timetables, hostel allocation, and mess
-planning — a hybrid system combining formal optimization (OR-Tools CP-SAT /
-PuLP) with predictive ML (attendance and mess-demand forecasting) over
-simulated NIT Mizoram data.
+CampusOpt is a minimal web application for predicting hostel mess lunch attendance for a 200-student hostel. The production app uses the existing pre-trained `mess_attendance_model.pkl` scikit-learn Pipeline and never trains, retrains, replaces, or fakes the ML model at runtime.
 
-## Quick start
+## Project structure
 
-```bash
-nix develop                     # or: python -m venv .venv && pip install -r backend/requirements.txt
-python scripts/generate_synthetic_data.py --scale small --seed 42
-python -m backend.app.prediction.train --target mess-demand
-cd backend && uvicorn app.main:app --reload &
-cd frontend && streamlit run streamlit_app.py
+```text
+backend/
+  main.py
+  model/
+    mess_attendance_model.pkl   # place the existing trained Pipeline here
+  requirements.txt
+frontend/
+  src/
+  package.json
+README.md
 ```
 
-## Documentation
+## Model placement
 
-Full documentation lives in [`docs/`](docs/) — start with
-[`docs/Description.md`](docs/Description.md) for what this is and why, then
-[`docs/Architecture.md`](docs/Architecture.md) for the actual math and
-system design.
+Place your existing model file at:
 
-| Doc | Covers |
-|---|---|
-| [Description.md](docs/Description.md) | Problem framing, scope, success criteria |
-| [Architecture.md](docs/Architecture.md) | System design, formal model formulations, infeasibility handling |
-| [DataModel.md](docs/DataModel.md) | Schemas, simulated data generation rules |
-| [Toolchain.md](docs/Toolchain.md) | Environment setup (Nix flake or pip), running everything |
-| [CodingStyle.md](docs/CodingStyle.md) | Code conventions |
-| [Contributing.md](docs/Contributing.md) | Branching, PR workflow, review expectations |
-| [Roadmap.md](docs/Roadmap.md) | Milestones, exit criteria, deferred work |
+```text
+backend/model/mess_attendance_model.pkl
+```
 
-## Deliverables status
+The FastAPI service loads that file once during startup with `joblib.load(...)`. The saved object is expected to be the complete scikit-learn Pipeline containing preprocessing and the Random Forest model.
 
-- [ ] Formal solver-based model (OR-Tools / PuLP) for all three subproblems
-- [ ] Solution-quality report vs. naive baseline, 3 dataset sizes
-- [ ] Predictive component with temporal train/test split + MAE/RMSE
-- [ ] Infeasibility stress test with graceful degradation
-- [ ] Working prototype UI
+## Backend setup and startup
 
-See [`docs/Roadmap.md`](docs/Roadmap.md) for the milestone breakdown behind
-this checklist.
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r backend/requirements.txt
+uvicorn backend.main:app --reload
+```
+
+The API will run at `http://localhost:8000` by default.
+
+### API endpoints
+
+- `GET /health` reports whether the model is loaded.
+- `POST /predict` accepts prediction inputs from the frontend and calls `model.predict(input_dataframe)`.
+
+Example request:
+
+```json
+{
+  "date": "2026-08-12",
+  "is_holiday": 0,
+  "is_exam_period": 0,
+  "is_rainy": 0,
+  "is_special_event": 0,
+  "previous_day_lunch": 180,
+  "lunch_7_day_avg": 175
+}
+```
+
+The backend derives the date-based features internally and builds the exact training feature structure:
+
+```text
+day_of_week, is_weekend, is_holiday, is_exam_period, is_rainy,
+is_special_event, previous_day_lunch, lunch_7_day_avg,
+day_of_month, month, day_of_year, week_of_year
+```
+
+Predictions are clamped to the valid hostel capacity range of 0 to 200 students. The returned range is `prediction ± historical MAE` and is labeled as an estimated range based on historical model error, not a guaranteed confidence interval.
+
+## Frontend setup and startup
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+The Vite frontend runs at `http://localhost:5173` by default and sends requests to `http://localhost:8000/predict`. To point it at another backend URL, set:
+
+```bash
+VITE_API_URL=http://your-backend-host:8000 npm run dev
+```
+
+## Important ML behavior
+
+- The model is pre-trained and is **not retrained** when the application runs.
+- The backend loads only `backend/model/mess_attendance_model.pkl`.
+- No second ML model is created in the application.
+- The frontend does not generate predictions; it only sends inputs to `/predict` and displays the backend response.
+- If the model cannot be loaded or prediction fails, the backend returns a clear error instead of fake or random values.

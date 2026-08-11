@@ -1,13 +1,8 @@
 fastapi
 uvicorn[standard]
-ortools
-pulp
 pandas
 scikit-learn
 joblib
-xgboost
-streamlit
-plotly
 pydantic
 pytest
 ruff
