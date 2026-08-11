@@ -36,3 +36,10 @@ reports/solution_quality/*
 # Machine Specific
 .direnv/*
 
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# Local trained model supplied by the user
+backend/model/*.pkl
