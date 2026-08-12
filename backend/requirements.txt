@@ -4,6 +4,3 @@ pandas
 scikit-learn
 joblib
 pydantic
-pytest
-ruff
-python-multipart
